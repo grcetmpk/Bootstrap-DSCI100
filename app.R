@@ -184,8 +184,8 @@ background-color: white !important;
                      p("In this simulation, there is a candy factory where there is a machine that produces a set proportion of lollipops and candies.", strong("Use the slider on the right hand side to change the proportion of lollipops that the factory produces (the population proportion)!")),
                      
                      p("Once all of the candy is produced, a machine mixes them up and places a set amount in a box. You can", strong("control the number of candies per box (the sample size)"), " using the box on the left-hand side."),
-                     p("Opening a box of candy is like taking a random sample!", strong("Click the \"Sample 1 Box\" button to open a box to view the sample, and calculate the sample proportion of lollipops."), "This will vary from box-to-box... 
-                       but by how much? To see, let's open more boxes and plot the sample proportion of lollipops for every box opened! You can open more boxes individually, or", strong("open and calculate the sample proportions of lollipops for many boxes all at once clicking the 'Generate X Samples' button below.")),
+                     p("Opening a box of candy is like taking a random sample!", strong("Click the \"Open 1 Box\" button to open a box to view the sample, and calculate the sample proportion of lollipops."), "This will vary from box-to-box... 
+                       but by how much? To see, let's open more boxes and plot the sample proportion of lollipops for every box opened! You can open more boxes individually, or", strong("open and calculate the sample proportions of lollipops for many boxes all at once clicking the \"Open X Boxes\" button.")),
                      p("At the bottom of this page, you'll find the", strong("histogram of the Sampling Distribution."), "You can see the mean proportion of lollipops across all of the samples you took and compare it to the true value! Notice how the histogram changes as you change the sample size or number of samples."),
                      p("To restart the simulation, click the red \"Reset All\" button on the left-hand pane."),
                      p(em("Interested in learning about the", strong(" bootstrap distribution?"),  "Click the Bootstrap Distribution tab above to switch applets!"))
@@ -193,9 +193,9 @@ background-color: white !important;
                ),
                fluidRow(
                  # Single Sample UI (Width 6) - NOW CONTAINS VISUALIZATION
-                 box(title = "Step 1: Simulate One Box (Sample) and View Contents", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
+                 box(title = "Sample Once ", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
                      h5("Click the button to open a box of candy, and determine the proportion of lollipops. You may click this button many times to look at many different samples!"),
-                     actionButton("sample_one_box", "Sample 1 Box", icon = icon("box-open")),
+                     actionButton("sample_one_box", "Open 1 Box", icon = icon("box-open")),
                      tags$hr(),
                      # ADDED: Single Sample Proportion Display
                      uiOutput("sample_prop_single_ui"),
@@ -205,9 +205,9 @@ background-color: white !important;
                  ),
                  
                  # Bulk Sample UI (Width 6)
-                 box(title = "Step 2: Simulate Many Boxes", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
-                     h5("Click this button to open many boxes of candy and once, and calculate the proportion of lollipops in each of them."),
-                     actionButton("sample_many_boxes", textOutput("sampling_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
+                 box(title = "Same Many Times At Once", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
+                     h5("Click this button to open many boxes of candy at once, and calculate the proportion of lollipops in each of them."),
+                     actionButton("sample_many_boxes", textOutput("sampling_bulk_label", inline = TRUE), icon = icon("box-open")),
                      tags$hr()
                  )
                ),
@@ -228,8 +228,8 @@ background-color: white !important;
                  box(title = "Estimating the Sampling Distribution with a Single Box of Candy", status = "primary", solidHeader = TRUE, width = 12,
                      p("Here, we assume", strong("we only have access to a single box of candy (one sample)."), "We can get a point estimate of the true proportion of lollipops the factor makes, but how \"good\" is this estimate?", strong("We may want to quantify how sure we are about this estimate by also looking at the uncertainty."), "To do so, we can use the bootstrap distribution."),
                      p("We treat our original box as a \"pseudo-population\" and", strong("repeatedly sample from this box of candy with replacement"),  "to create the Bootstrap Distribution. The bootstrap distribution is an", strong("approximation"),  "of the sampling distribution."),
-                     p("Sampling with replacement means if I have a sample of 100 candies, I'm going to randomly sample a single candy from my candy box 100 times, but every time I sample the candy, I put it back into the box. This way, the same candy can be chosen multiple times!", strong("These resamples are estimates of what unique samples from the population may have looked like.")),
-                     p("Adjust the parameters on the left-hand pane, and then ", strong("press the button to select a box of candy to use as your sample."), "Then, generate single resamples (with replacement) one-by-one using the", strong("\"Resample 1 Box button\""), ", or generate many samples at once using the", strong("\"Generate X Samples\""),  "button on the right.", strong("See how the mean of the proportions of the bootstrap distribution compares to the proportion of lollipops in the sample, and the true population proportion!")),
+                     p("Sampling with replacement means if I have a sample of 100 candies, I'm going to randomly sample a single candy from my candy box 100 times, but every time I sample the candy, I put it back into the box. This way, the same candy can be chosen multiple times!", strong("These bootstrap samples are estimates of what unique samples from the population may have looked like.")),
+                     p("Adjust the parameters on the left-hand pane, and then ", strong("press the button to select a box of candy to use as your sample."), "Then, generate single bootstrap samples (samples from the original sample, with replacement) one-by-one using the", strong("\"Sample with Replacement from 1 Box\" button"), ", or generate many samples at once using the", strong("\"Sample with Replacement X Times\""),  "button on the right.", strong("See how the mean of the proportions of the bootstrap distribution compares to the proportion of lollipops in the sample, and the true population proportion!")),
                      p("You can also quantify the uncertainty in this estimate by looking at the", strong("95% plausible range."), "Check the box on the plot to calculate and view the plausible range.  A narrower range indicates that your estimate has less uncertainty (i.e., is a better estimate!). Notice how the plausible range changes as your sample size changes!"),
                      p("To restart the simulation, click the \"Reset All\" button on the left-hand pane."),
                      p(em("Looking to see the", strong("sampling distribution"), "when taking many samples from the population? Click on the", strong("Sampling Distribution"), "tab to switch applets!"))
@@ -237,27 +237,29 @@ background-color: white !important;
                ),
                fluidRow(
                  # Original Sample Box Setup
-                 box(title = "Step 1: Choose a Box of Candy", status = "success", solidHeader = TRUE, width = 4,
-                     h5("Click this button to open a box of candy to use as your sample."),
+                 box(title = "Step 1: Obtain a Random Sample", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this button to open a box of candy to use as your sample, and view its contents."),
                      actionButton("generate_original_sample", "Press to Choose a Random Box of Candy", icon = icon("box-open")),
                      tags$hr(),
                      uiOutput("original_sample_stats_ui"),
                      uiOutput("original_candy_vis")
                  ),
                  # Single Resample UI
-                 box(title = "Step 2A: Simulate One Resample (Sample with Replacement)", status = "success", solidHeader = TRUE, width = 4,
-                     h5("Click this button to resample from your original sample with replacement one time. You may click this button many times to generate many resamples one-by-one."),
+                 box(title = "Step 2A: Simulate One Bootstrap Sample", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this button to create a bootstrap sample from the sample in Step 1."),
+                     h5("You will randomly select a candy from the Sample in Step 1, record it, and place it back into the box. This will be repeated until you have a new sample with the same sample size as in Step 1."),
+                     h5("You may click this button many times to generate many bootstrap samples one-by-one."),
                      h4(textOutput("resample_header_label", inline = TRUE)),
                      actionButton("resample_one_box", textOutput("resample_one_label", inline = TRUE), icon = icon("redo-alt")),
                      tags$hr(),
                      uiOutput("resample_prop_single_ui"),
                      tags$hr(),
-                     h4("Contents of the Resampled Box"),
+                     h4("Contents of the Bootstrap Sample"),
                      uiOutput("resample_candy_vis")
                  ),
                  # Bulk Resample UI
-                 box(title = "Step 2B: Simulate Many Resamples", status = "success", solidHeader = TRUE, width = 4,
-                     h5("Click this button to resample with replacement many times, and calculate the proportion of lollipops in each resample."),
+                 box(title = "Step 2B: Simulate Many Bootstrap Samples", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this generate many bootstrap samples and and calculate the proportion of lollipops within each sample."),
                      actionButton("resample_many_boxes", textOutput("bootstrap_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
                      tags$hr()
                  )
@@ -297,16 +299,16 @@ server <- function(input, output, session) {
   
   # Reactive labels for bulk sampling buttons
   output$sampling_bulk_label <- renderText({
-    paste("Generate", input$n_bulk_ui, "Samples")
+    paste("Open", input$n_bulk_ui, "Boxes")
   })
   
   output$bootstrap_bulk_label <- renderText({
-    paste("Generate", input$n_bulk_ui, "Resamples")
+    paste("Sample with Replacement", input$n_bulk_ui, "Times")
   })
   
   # Reactive label for the Resample button and header
   output$resample_one_label <- renderText({
-    paste("Resample 1 Box (N=", input$n_sample_ui, ")")
+    paste("Sample with Replacement from 1 Box")
   })
   
   

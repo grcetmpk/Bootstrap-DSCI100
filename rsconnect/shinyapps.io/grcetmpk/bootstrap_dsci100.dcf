@@ -5,7 +5,7 @@ account: grcetmpk
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16223167
-bundleId: 11269383
+bundleId: 11269648
 url: https://grcetmpk.shinyapps.io/bootstrap_dsci100/
 version: 1
 asMultiple: FALSE
