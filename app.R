@@ -20,12 +20,19 @@ COLOR_CI <- "#009E73" # Greenish-blue for CI lines
 CANDY_RED <- "🍭" # Red Candy/Lollipop
 CANDY_GREEN <- "🍬" # Green Candy
 
+# Define the colors and linetypes for the legend (moved here for global access, though only used in server)
+LINE_COLORS <- c("True Population Proportion" = "red", "Mean of Sample Proportions" = "blue", "Original Sample Proportion" = "red", "Mean of Bootstrap Proportions" = "blue")
+LINE_LINETYPES <- c("True Population Proportion" = "solid", "Mean of Sample Proportions" = "longdash", "Original Sample Proportion" = "solid", "Mean of Bootstrap Proportions" = "longdash")
+LINE_SIZES <- c("True Population Proportion" = 0.5, "Mean of Sample Proportions" = 0.5, "Original Sample Proportion" = 0.5, "Mean of Bootstrap Proportions" = 0.5)
+
+
 # --- UI (User Interface) ---
 ui <- dashboardPage(
   # 1. Set the dashboard skin to a classic color, e.g., "blue".
   title = "Grace's Candy Factory 🍭 ",
   skin = "blue",
   dashboardHeader(title = "Grace's Candy Factory 🍭"),
+  # --- MODIFICATION 1: Keep the sidebar for the settings, but remove the tab menu ---
   dashboardSidebar(
     tags$style(
       HTML("
@@ -71,14 +78,12 @@ background-color: #dddddd !important; /* Changed to LIGHT GREY */
 font-size: 20px; /* Adjust size as needed */
 margin: 2px;
 display: inline-block;
-line-height: 1; /* Helps with vertical alignment */
+line-height = 1; /* Helps with vertical alignment */
 }
 ")
     ),
-    sidebarMenu(id = "sidebarMenu", # Added ID for reactive observation
-                menuItem("Sampling Distribution", tabName = "sampling", icon = icon("boxes")),
-                menuItem("Bootstrap Distribution", tabName = "bootstrap", icon = icon("redo-alt"))
-    ),
+    # The sidebarMenu is REMOVED because the tabs are now in the body.
+    # We keep the app settings and the action button in the sidebar.
     tags$hr(),
     # Ensuring the h5 header text is black
     h4(style = "padding-left: 20px; color: #000000;", "App Settings"),
@@ -103,6 +108,7 @@ line-height: 1; /* Helps with vertical alignment */
     actionButton("reset_all", "Reset All", icon = icon("power-off"),
                  style="color: #fff; background-color: #dc3545; border-color: #dc3545; margin-left: 15px;")
   ),
+  # --- MODIFICATION 2: Put the tab content inside a tabBox in the dashboardBody ---
   dashboardBody(
     tags$style(
       HTML("
@@ -110,104 +116,179 @@ line-height: 1; /* Helps with vertical alignment */
 .content-wrapper, .right-side {
 background-color: white !important;
 }
+
+/* Target the overall wrapper element that holds the entire dashboard */
+.wrapper {
+    background-color: white !important;
+}
+
+/* --- FIX: Ensure the box and its content area are explicitly white --- */
+/* This targets the boxes that contain the distribution plots and info */
+.box.box-solid.box-primary {
+    background-color: white !important;
+}
+
+/* This targets the plot area inside those boxes, just in case */
+.box.box-solid.box-primary > .box-body {
+    background-color: white !important;
+}
+/* --- END FIX --- */
+
 /* Custom colors for candy boxes */
 .small-box.bg-red { background-color: #FF4B3E !important; color: white !important; }
 .small-box.bg-green { background-color: #5BE366 !important; color: white !important; }
+
+/* --- Tab Outline Color Modification --- */
+/* Target the overall tab box border */
+.nav-tabs-custom {
+  border-top-color: #333333; /* Darker line above content area */
+}
+/* Target the border of the tab itself (at the bottom of the tab header) */
+.nav-tabs-custom > .nav-tabs > li.active {
+  border-bottom-color: #333333; /* Darker line under the active tab */
+}
+/* Target the border on the non-active tabs */
+.nav-tabs-custom > .nav-tabs > li {
+  border-top: 1px solid #333333; /* Darker top border for non-active tabs */
+  border-left: 1px solid #333333; /* Darker left border for non-active tabs */
+  border-right: 1px solid #333333; /* Darker right border for non-active tabs */
+}
+/* Target the border of the active tab specifically to set a dark border */
+.nav-tabs-custom > .nav-tabs > li.active:hover > a,
+.nav-tabs-custom > .nav-tabs > li.active > a {
+  border-top-color: #333333; /* Darker top border for active tab */
+  border-left-color: #333333; /* Darker left border for active tab */
+  border-right-color: #333333; /* Darker right border for active tab */
+}
+/* Target the border of the content pane */
+.tab-content {
+  border: 1px solid #333333; /* Darker border around the content area */
+  border-top-color: #333333; /* Ensure the top border is dark (to meet the tab) */
+}
+/* --- End Tab Outline Color Modification --- */
 ")
     ),
-    tabItems(
-      # --- Tab 1: Sampling Distribution ---
-      tabItem(tabName = "sampling",
-              fluidRow(
-                # Descriptive Box for Sampling Distribution Tab
-                box(title = "Welcome to Grace's Candy Factory! 🍭", status = "primary", solidHeader = TRUE, width = 12,
-                    p("In this simulation, there is a candy factory where there is a machine that produces a set proportion of lollipops and candies. Use the slider on the right hand side to change the proportion of lollipops that the factory produces!"),
-                    p("Once all of the candy is produced, a machine mixes them up and places a set amount in a box. You can control the number of candies per box (i.e., the sample size) using the box on the left-hand side."),
-                    p(paste("Opening a box of candy is like taking a random sample! Open a box to see the proportion of lollipops. This will vary from box-to-box... but by how much? To see, let's plot the sample proportion of lollipops for every box opened! Open many boxes individually by re-clicking \"Sample One Box\", or open many all at once by clicking the 'Generate X Samples' button below.")),
-                    p("At the bottom of this page, you'll find a histogram of the Sampling Distribution. You can see the mean proportion of lollipops across all of the samples you took and compare it to the true value! Notice how this number changes as you sample size or number of samples changes."),
-                    h4("Interested in learning about the bootstrap distribution? Click the Bootstrap Distribution tab on the top-left to switch tabs!")
-                )
-              ),
-              fluidRow(
-                # Single Sample UI (Width 6) - NOW CONTAINS VISUALIZATION
-                box(title = "Step 1: Simulate One Box (Sample) and View Contents", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
-                    h5("Click the button to open a box of candy, and determine the proportion of lollipops. You may click this button many times to look at many different samples!"),
-                    actionButton("sample_one_box", "Sample 1 Box", icon = icon("box-open")),
-                    tags$hr(),
-                    # ADDED: Single Sample Proportion Display
-                    uiOutput("sample_prop_single_ui"),
-                    uiOutput("candy_box_vis_sampling")
-                    
-                    # ADDED: Live Box Visualization (Sampling)
-                ),
-                
-                # Bulk Sample UI (Width 6)
-                box(title = "Step 2: Simulate Many Boxes", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
-                    h5("Click this button to open many boxes of candy and once, and calculate the proportion of lollipops in each of them."),
-                    actionButton("sample_many_boxes", textOutput("sampling_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
-                    tags$hr()
-                )
-              ),
-              fluidRow(
-                box(title = "Sampling Distribution", status = "primary", solidHeader = TRUE, width = 12,
-                    uiOutput("sampling_stats_ui"),
-                    plotOutput("sampling_hist_plot"),
-                )
-              )
+    # Start the tabBox to create the clickable tabs in the main area
+    tabBox(
+      title = NULL, # No title needed for the overall box
+      id = "tabset1", # An ID for the tabBox
+      width = 12, # Take up the full width
+      
+      # The content of the original tabItem('sampling') is now a tabPanel
+      tabPanel("Sampling Distribution", icon = icon("boxes"), value = "sampling",
+               
+               # Content of the Sampling Distribution tab starts here
+               fluidRow(
+                 # Descriptive Box for Sampling Distribution Tab
+                 box(title = "Welcome to Grace's Candy Factory! 🍭", status = "primary", solidHeader = TRUE, width = 12,
+                     p("In this simulation, there is a candy factory where there is a machine that produces a set proportion of lollipops and candies.", strong("Use the slider on the right hand side to change the proportion of lollipops that the factory produces (the population proportion)!")),
+                     
+                     p("Once all of the candy is produced, a machine mixes them up and places a set amount in a box. You can", strong("control the number of candies per box (the sample size)"), " using the box on the left-hand side."),
+                     p("Opening a box of candy is like taking a random sample!", strong("Click the \"Sample 1 Box\" button to open a box to view the sample, and calculate the sample proportion of lollipops."), "This will vary from box-to-box... 
+                       but by how much? To see, let's open more boxes and plot the sample proportion of lollipops for every box opened! You can open more boxes individually, or", strong("open and calculate the sample proportions of lollipops for many boxes all at once clicking the 'Generate X Samples' button below.")),
+                     p("At the bottom of this page, you'll find the", strong("histogram of the Sampling Distribution."), "You can see the mean proportion of lollipops across all of the samples you took and compare it to the true value! Notice how the histogram changes as you change the sample size or number of samples."),
+                     p("To restart the simulation, click the red \"Reset All\" button on the left-hand pane."),
+                     p(em("Interested in learning about the", strong(" bootstrap distribution?"),  "Click the Bootstrap Distribution tab above to switch applets!"))
+                 )
+               ),
+               fluidRow(
+                 # Single Sample UI (Width 6) - NOW CONTAINS VISUALIZATION
+                 box(title = "Step 1: Simulate One Box (Sample) and View Contents", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
+                     h5("Click the button to open a box of candy, and determine the proportion of lollipops. You may click this button many times to look at many different samples!"),
+                     actionButton("sample_one_box", "Sample 1 Box", icon = icon("box-open")),
+                     tags$hr(),
+                     # ADDED: Single Sample Proportion Display
+                     uiOutput("sample_prop_single_ui"),
+                     uiOutput("candy_box_vis_sampling")
+                     
+                     # ADDED: Live Box Visualization (Sampling)
+                 ),
+                 
+                 # Bulk Sample UI (Width 6)
+                 box(title = "Step 2: Simulate Many Boxes", status = "success", solidHeader = TRUE, width = 6, # Changed width from 4 to 6
+                     h5("Click this button to open many boxes of candy and once, and calculate the proportion of lollipops in each of them."),
+                     actionButton("sample_many_boxes", textOutput("sampling_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
+                     tags$hr()
+                 )
+               ),
+               fluidRow(
+                 box(title = "Sampling Distribution", status = "primary", solidHeader = TRUE, width = 12,
+                     uiOutput("sampling_stats_ui"),
+                     plotOutput("sampling_hist_plot"),
+                 )
+               )
+               # End of Sampling Distribution tabPanel
       ),
       
-      # --- Tab 2: Bootstrap Distribution ---
-      tabItem(tabName = "bootstrap",
-              fluidRow(
-                box(title = "Estimating the Sampling Distribution with a Single Box of Candy", status = "primary", solidHeader = TRUE, width = 12,
-                    p("Here, we assume we only have access to a single box of candy (one sample). We can get a point estimate of the true proportion of lollipops the factor makes, but how \"good\" is this estimate? We may want to quantify how sure we are about this estimate by also looking at the uncertainty. To do so, we can use the bootstrap distribution."),
-                    p("We treat our original box as the \"pseudo-population\" and repeatedly sample with replacement to create the Bootstrap Distribution. The bootstrap distribution is an approximation of the sampling distribution."),
-                    p("Sampling with replacement means if I have a sample of 100 candies, I'm going to randomly sample a single candy from my candy box 100 times, but every time I sample the candy, I put it back into the box. This way, the same candy can be chosen multiple times! These resamples are estimates of what unique samples from the population may have looked like. ."),
-                    p("Adjust the parameters on the lefthand side, and then press the button to select a box of candy to use as your sample. Then, generate single resamples (with replacement) one-by-one using the Resample 1 Box button, or generate many samples at one using the button on the right. See how the mean of the proportions of the bootstrap distribution compares to the proportion of lollipops in the sample, and the true population proportion!"),
-                    p("You can also quantify the uncertainty in this estimate by looking at the 95% plausible range. A narrower range indicates that your estimate has less uncertainty (i.e., is a better estimate!). Notice how this changes as your sample size changes!"),
-                    h4("Looking to see the sampling distribution when taking many samples from the population? Click on the \"Sampling Distribution\" tab on the left-hand side!")
-                )
-              ),
-              fluidRow(
-                # Original Sample Box Setup
-                box(title = "Step 1: Choose a Box of Candy", status = "success", solidHeader = TRUE, width = 4,
-                    h5("Click this button to open a box of candy to use as your sample."),
-                    actionButton("generate_original_sample", "Press to Choose a Random Box of Candy", icon = icon("box-open")),
-                    tags$hr(),
-                    uiOutput("original_sample_stats_ui"),
-                    uiOutput("original_candy_vis")
-                ),
-                # Single Resample UI
-                box(title = "Step 2A: Simulate One Resample (Sample with Replacement)", status = "success", solidHeader = TRUE, width = 4,
-                    h5("Click this button to resample from your original sample with replacement one time. You may click this button many times to generate many resamples one-by-one."),
-                    h4(textOutput("resample_header_label", inline = TRUE)),
-                    actionButton("resample_one_box", textOutput("resample_one_label", inline = TRUE), icon = icon("redo-alt")),
-                    tags$hr(),
-                    uiOutput("resample_prop_single_ui"),
-                    tags$hr(),
-                    h4("Contents of the Resampled Box"),
-                    uiOutput("resample_candy_vis")
-                ),
-                # Bulk Resample UI
-                box(title = "Step 2B: Simulate Many Resamples", status = "success", solidHeader = TRUE, width = 4,
-                    h5("Click this button to resample with replacement many times, and calculate the proportion of lollipops in each resample."),
-                    actionButton("resample_many_boxes", textOutput("bootstrap_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
-                    tags$hr()
-                )
-              ),
-              fluidRow(
-                box(title = "Bootstrap Distribution", status = "primary", solidHeader = TRUE, width = 12,
-                    # NEW CHECKBOX ADDED HERE
-                    checkboxInput("show_plausible_range",
-                                  "Show 95% Plausible Range (Bootstrap CI)", FALSE),
-                    uiOutput("bootstrap_stats_ui"),
-                    plotOutput("bootstrap_hist_plot"),
-                    # ADDED TEXT LINE
-                    p("Because we are resampling from the original sample repeatedly, we see that the bootstrap distribution is centered at the original sample’s mean value (unlike the sampling distribution of the sample mean, which is centered at the population parameter value).")
-                )
-              )
+      # The content of the original tabItem('bootstrap') is now a tabPanel
+      tabPanel("Bootstrap Distribution", icon = icon("redo-alt"), value = "bootstrap",
+               
+               # Content of the Bootstrap Distribution tab starts here
+               fluidRow(
+                 box(title = "Estimating the Sampling Distribution with a Single Box of Candy", status = "primary", solidHeader = TRUE, width = 12,
+                     p("Here, we assume", strong("we only have access to a single box of candy (one sample)."), "We can get a point estimate of the true proportion of lollipops the factor makes, but how \"good\" is this estimate?", strong("We may want to quantify how sure we are about this estimate by also looking at the uncertainty."), "To do so, we can use the bootstrap distribution."),
+                     p("We treat our original box as a \"pseudo-population\" and", strong("repeatedly sample from this box of candy with replacement"),  "to create the Bootstrap Distribution. The bootstrap distribution is an", strong("approximation"),  "of the sampling distribution."),
+                     p("Sampling with replacement means if I have a sample of 100 candies, I'm going to randomly sample a single candy from my candy box 100 times, but every time I sample the candy, I put it back into the box. This way, the same candy can be chosen multiple times!", strong("These resamples are estimates of what unique samples from the population may have looked like.")),
+                     p("Adjust the parameters on the left-hand pane, and then ", strong("press the button to select a box of candy to use as your sample."), "Then, generate single resamples (with replacement) one-by-one using the", strong("\"Resample 1 Box button\""), ", or generate many samples at once using the", strong("\"Generate X Samples\""),  "button on the right.", strong("See how the mean of the proportions of the bootstrap distribution compares to the proportion of lollipops in the sample, and the true population proportion!")),
+                     p("You can also quantify the uncertainty in this estimate by looking at the", strong("95% plausible range."), "Check the box on the plot to calculate and view the plausible range.  A narrower range indicates that your estimate has less uncertainty (i.e., is a better estimate!). Notice how the plausible range changes as your sample size changes!"),
+                     p("To restart the simulation, click the \"Reset All\" button on the left-hand pane."),
+                     p(em("Looking to see the", strong("sampling distribution"), "when taking many samples from the population? Click on the", strong("Sampling Distribution"), "tab to switch applets!"))
+                 )
+               ),
+               fluidRow(
+                 # Original Sample Box Setup
+                 box(title = "Step 1: Choose a Box of Candy", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this button to open a box of candy to use as your sample."),
+                     actionButton("generate_original_sample", "Press to Choose a Random Box of Candy", icon = icon("box-open")),
+                     tags$hr(),
+                     uiOutput("original_sample_stats_ui"),
+                     uiOutput("original_candy_vis")
+                 ),
+                 # Single Resample UI
+                 box(title = "Step 2A: Simulate One Resample (Sample with Replacement)", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this button to resample from your original sample with replacement one time. You may click this button many times to generate many resamples one-by-one."),
+                     h4(textOutput("resample_header_label", inline = TRUE)),
+                     actionButton("resample_one_box", textOutput("resample_one_label", inline = TRUE), icon = icon("redo-alt")),
+                     tags$hr(),
+                     uiOutput("resample_prop_single_ui"),
+                     tags$hr(),
+                     h4("Contents of the Resampled Box"),
+                     uiOutput("resample_candy_vis")
+                 ),
+                 # Bulk Resample UI
+                 box(title = "Step 2B: Simulate Many Resamples", status = "success", solidHeader = TRUE, width = 4,
+                     h5("Click this button to resample with replacement many times, and calculate the proportion of lollipops in each resample."),
+                     actionButton("resample_many_boxes", textOutput("bootstrap_bulk_label", inline = TRUE), icon = icon("tachometer-alt")),
+                     tags$hr()
+                 )
+               ),
+               fluidRow(
+                 box(title = "Bootstrap Distribution", status = "primary", solidHeader = TRUE, width = 12,
+                     # NEW CHECKBOX ADDED HERE
+                     checkboxInput("show_plausible_range",
+                                   "Show 95% Plausible Range (Bootstrap CI)", FALSE),
+                     uiOutput("bootstrap_stats_ui"),
+                     plotOutput("bootstrap_hist_plot"),
+                     # ADDED TEXT LINE
+                     p("Because we are resampling from the original sample repeatedly, we see that the bootstrap distribution is centered at the original sample’s mean value (unlike the sampling distribution of the sample mean, which is centered at the population parameter value).")
+                 )
+               )
+               # End of Bootstrap Distribution tabPanel
+      ) # End of tabBox
+    ), # End of tabBox
+    
+    # --- NEW AUTHOR SECTION ADDED HERE ---
+    fluidRow(
+      column(width = 12,
+             p(style = "text-align: center; color: #888888; font-size: 0.8em; margin-top: 15px;",
+               "Created by Grace Tompkins for DSCI100 at the University of British Columbia, using Gemini.",
+               tags$a(href = "https://github.com/grcetmpk/Bootstrap-DSCI100",
+                      target = "_blank", # Opens the link in a new tab
+                      "Click here for the GitHub Repository."))
+             
       )
     )
+    # --- END NEW AUTHOR SECTION ---
   )
 )
 
@@ -242,8 +323,11 @@ server <- function(input, output, session) {
   
   # -----------------------------------------------------------------------
   ### NEW LOGIC: RESET ON SAMPLE SIZE CHANGE (from previous request) ###
+  # NOTE: The reference to 'input$sidebarMenu' is no longer valid since we
+  # are using a tabBox. We must change it to reference the tabBox's ID: 'input$tabset1'.
   observeEvent(input$n_sample_ui, {
-    if (!is.null(rv$original_sample) && input$sidebarMenu == "bootstrap") {
+    # CHANGE: Replaced input$sidebarMenu with input$tabset1
+    if (!is.null(rv$original_sample) && input$tabset1 == "bootstrap") {
       
       rv$original_sample <- NULL
       rv$bootstrap_dist <- data.frame(prop_red = numeric(0))
@@ -343,7 +427,9 @@ server <- function(input, output, session) {
     
     div(
       h5(paste0("Total Samples: ", n_samples)),
-      h5(paste0("Size of Each Sample: ", round(input$n_sample_ui, 4)))
+      h5(paste0("Size of Each Sample: ", round(input$n_sample_ui, 3))),
+      h5(paste0("True Population Proportion: ", input$p_pop_ui),style = " color: #FF4B3E;"),
+      h5(paste0("Mean of Sample Proportions: ", round(mean(rv$sampling_dist$prop_red), 3)), style = " color: blue;")
     )
   })
   
@@ -359,15 +445,22 @@ server <- function(input, output, session) {
     
     ggplot(rv$sampling_dist, aes(x = prop_red)) +
       geom_histogram(binwidth = usebinwidth, fill = "grey", color = "white", alpha = 0.8) +
-      geom_vline(xintercept = input$p_pop_ui, linetype = "solid", color = "red", size = 0.5) +
-      geom_vline(xintercept = mean(rv$sampling_dist$prop_red), linetype = "longdash", color = "blue", size = 0.5) +
+      # Change to use aes() and guide for legend
+      geom_vline(aes(xintercept = input$p_pop_ui, linetype = "True Population Proportion", color = "True Population Proportion"), size = 0.5) +
+      geom_vline(aes(xintercept = mean(rv$sampling_dist$prop_red), linetype = "Mean of Sample Proportions", color = "Mean of Sample Proportions"), size = 0.5) +
+      # Use scale_color_manual and scale_linetype_manual for legend
+      scale_color_manual(name = "Legend",
+                         values = LINE_COLORS[c("True Population Proportion", "Mean of Sample Proportions")]) +
+      scale_linetype_manual(name = "Legend",
+                            values = LINE_LINETYPES[c("True Population Proportion", "Mean of Sample Proportions")]) +
       labs(
         x = "Proportion of Lollipops",
         y = "Frequency"
       ) + xlim(0, 1) +
       theme_minimal(base_size = 15) +
-      annotate("text", x = input$p_pop_ui, y = Inf, label = paste0("True Population Proportion: (", input$p_pop_ui, ")"), vjust = 2, hjust = 1.1, color = "blue") +
-      annotate("text", x = mean(rv$sampling_dist$prop_red), y = Inf, label = paste0("Mean of Sample Proportions: (", round(mean(rv$sampling_dist$prop_red),4), ")"), vjust = 1, hjust = -0.1, color = "red")
+      # Annotations must be kept outside of the main ggplot call to avoid errors with legend mapping
+      annotate("text", x = input$p_pop_ui, y = Inf, label = paste0(input$p_pop_ui), vjust = 2, hjust = 1.1, color = "red") +
+      annotate("text", x = mean(rv$sampling_dist$prop_red), y = Inf, label = paste0( round(mean(rv$sampling_dist$prop_red),3)), vjust = 1, hjust = -0.1, color = "blue")
     
   })
   
@@ -504,9 +597,12 @@ server <- function(input, output, session) {
     
     div(
       h5(paste("Total Resamples:", n_resamples)), # Changed to show actual count from rv$bootstrap_dist
-      h5(paste("Sample Size:", input$n_sample_ui))
+      h5(paste("Sample Size:", input$n_sample_ui)),
+      h5(paste("Original Sample Proportion:", round(sum(rv$original_sample) / length(rv$original_sample), 3)), style = "color: red"),
+      h5(paste("Mean of Bootstrap Sample Proportions:", round(mean( rv$bootstrap_dist$prop_red), 3)), style = "color: blue")
     )
   })
+  
   
   # Output: Bootstrap Distribution Histogram
   output$bootstrap_hist_plot <- renderPlot({
@@ -530,10 +626,15 @@ server <- function(input, output, session) {
       xlim(0,1) +
       geom_histogram(binwidth = usebinwidth, fill = "grey", color = "white", alpha = 0.8) +
       
-      # Line for Original Sample Proportion
-      geom_vline(xintercept = mean_prop_orig, linetype = "solid", color = "red", size = 0.5) +
+      # Change to use aes() and guide for legend
+      geom_vline(aes(xintercept = mean_prop_orig, linetype = "Original Sample Proportion", color = "Original Sample Proportion"), size = 0.5) +
       # Line for Mean of Bootstrap Proportions (Only plot if we have at least 1 sample)
-      geom_vline(xintercept = mean(prop_data), linetype = "longdash", color = "blue", size = 0.5) +
+      geom_vline(aes(xintercept = mean(prop_data), linetype = "Mean of Bootstrap Proportions", color = "Mean of Bootstrap Proportions"), size = 0.5) +
+      # Use scale_color/linetype_manual for legend
+      scale_color_manual(name = "Legend",
+                         values = LINE_COLORS[c("Original Sample Proportion", "Mean of Bootstrap Proportions")]) +
+      scale_linetype_manual(name = "Legend",
+                            values = LINE_LINETYPES[c("Original Sample Proportion", "Mean of Bootstrap Proportions")]) +
       
       theme_minimal(base_size = 15) +
       labs(
@@ -542,12 +643,12 @@ server <- function(input, output, session) {
       ) +
       # Annotations for main lines
       annotate("text", x = mean_prop_orig, y = Inf,
-               label = paste0("Original Sample Proportion (Red Line): ", round(mean_prop_orig, 4)),
+               label = paste0(round(mean_prop_orig, 3)),
                vjust = 2, hjust = 1.05, color = "red") +
       # Only show mean annotation if there are resamples
       if (length(prop_data) > 0) {
         annotate("text", x = mean(prop_data), y = Inf,
-                 label = paste0("Mean of Bootstrap Proportions (Blue Line): ", round(mean(prop_data), 4)),
+                 label = paste0(round(mean(prop_data), 3)),
                  vjust = 2.5, hjust = -0.02, color = "blue")
       } else {
         NULL
@@ -573,11 +674,11 @@ server <- function(input, output, session) {
           
           # Annotate the CI values
           annotate("text", x = ci_lower, y = max(ggplot_build(p)$data[[1]]$count) * 0.9,
-                   label = paste0("2.5th quantile: ", round(ci_lower, 4)), vjust = 20, hjust = 1.2, color = COLOR_CI) +
+                   label = paste0("2.5th quantile: ", round(ci_lower, 3)), vjust = 20, hjust = 1.1, color = COLOR_CI) +
           annotate("text", x = ci_upper, y = max(ggplot_build(p)$data[[1]]$count) * 0.9,
-                   label = paste0("97.5th quantile: ", round(ci_upper, 4)), vjust = 20, hjust = -0.2, color = COLOR_CI) +
+                   label = paste0("97.5th quantile: ", round(ci_upper, 3)), vjust = 20, hjust = -0.1, color = COLOR_CI) +
           annotate("text", x = (ci_lower + ci_upper) / 2, y = max(ggplot_build(p)$data[[1]]$count) * 0.8,
-                   label = "95% Plausible Range", vjust = 20, color = COLOR_CI, fontface = "bold")
+                   label = "", vjust = 0.5, color = COLOR_CI, fontface = "bold")
         
       } else {
         # Notification if too few resamples for CI
